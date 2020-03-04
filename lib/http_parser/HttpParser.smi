@@ -4,7 +4,7 @@ _require "ffi.smi"
 structure HttpParser =
 struct
 exception Parse
-type t(=boxed)
+type t (= *)
 type chunkedDecoder = unit ptr
 type request = {method: string, path: string, minorVersion: int, headers: (string * string) list, parsedSize: int}
 type response = {minorVersion: int, status: int, message: string, headers: (string * string) list, parsedSize: int}

@@ -9,59 +9,55 @@ type response = {minorVersion: int, status: int, message: string, headers: (stri
 exception Parse
 exception MemoryFull
 
-val phr_prepare_headers = _import "phr_prepare_headers": __attribute__((no_callback))
-                                                                      int -> headers
+val phr_prepare_headers = _import "phr_prepare_headers": int -> headers
 
-val phr_prepare_decoder = _import "phr_prepare_decoder": __attribute__((no_callback))
-                                                                      () -> chunkedDecoder
+val phr_prepare_decoder = _import "phr_prepare_decoder": () -> chunkedDecoder
 
-val phr_finalize_headers = _import "free": __attribute__((no_callback))
-                                                        headers -> ()
-val phr_finalize_decoder = _import "free": __attribute__((no_callback))
-                                                        chunkedDecoder -> ()
+val phr_finalize_headers = _import "free": headers -> ()
+val phr_finalize_decoder = _import "free": chunkedDecoder -> ()
 
 val phr_parse_request =
-    _import "phr_parse_request":  __attribute__((no_callback))
-                                               (
-                                                 string, int,
-                                                 string ref, int ref,
-                                                 string ref, int ref,
-                                                 int ref,
-                                                 headers, int ref,
-                                                 int
-                                               ) -> int
+    _import "phr_parse_request":
+    (
+      string, int,
+      char ptr ptr, int ref,
+      char ptr ptr, int ref,
+      int ref,
+      headers, int ref,
+      int
+    ) -> int
 
 val phr_parse_response =
-    _import "phr_parse_response": __attribute__((no_callback))
-                                               (
-                                                 string, int,
-                                                 int ref,
-                                                 int ref, string ref, int ref,
-                                                 headers, int ref,
-                                                 int
-                                               ) -> int
+    _import "phr_parse_response":
+    (
+      string, int,
+      int ref,
+      int ref, char ptr ptr, int ref,
+      headers, int ref,
+      int
+    ) -> int
 
 val phr_parse_headers =
-    _import "phr_parse_headers": __attribute__((no_callback))
-                                              (
-                                                string, int,
-                                                headers, int ref,
-                                                int
-                                              ) -> int
+    _import "phr_parse_headers":
+    (
+      string, int,
+      headers, int ref,
+      int
+    ) -> int
 
 val phr_decode_chunked_aux =
-    _import "phr_decode_chunked_aux": __attribute__((no_callback))
-                                               (
-                                                 chunkedDecoder,
-                                                 CharArray.array, int,
-                                                 int ref
-                                               ) -> int
+    _import "phr_decode_chunked_aux":
+    (
+      chunkedDecoder,
+      CharArray.array, int,
+      int ref
+    ) -> int
 
 fun prepareHeaders n =
   let
       val headers = phr_prepare_headers n
   in
-      if headers = _NULL
+      if Pointer.isNull headers
       then raise MemoryFull
       else (headers, n)
   end
@@ -76,6 +72,8 @@ val toUnitPtr = SMLSharp_Builtin.Pointer.toUnitPtr
 val advance = Pointer.advance
 val importString = Pointer.importString
 val isNull = Pointer.isNull
+val null = Pointer.NULL
+val loadString  = Pointer.importString o Pointer.load
 fun getHeader (headers, n) i =
       if 0<=i andalso i < n
       then let
@@ -116,7 +114,7 @@ fun prepareDecoder () =
   let
       val decoder = phr_prepare_decoder()
   in
-      if decoder = _NULL
+      if Pointer.isNull decoder
       then raise MemoryFull
       else decoder
   end
@@ -139,13 +137,13 @@ fun getHeaders headers n =
                            | SOME name' => ((name', maybeAppend value value_acc):: acc, NONE))
                      ([], NONE) (loop 0 []))
   end
-      
+
 fun parseRequest (t as (headers, n)) buf =
   let
       val bufLen = String.size(buf)
-      val method = ref ""
+      val method = null ()
       val methodLen = ref 0
-      val path = ref ""
+      val path = null ()
       val pathLen = ref 0
       val minorVersion = ref 0
       val numHeaders = ref n
@@ -155,8 +153,8 @@ fun parseRequest (t as (headers, n)) buf =
           ~1 => raise Parse
         | ~2 => NONE
         | x => SOME{
-                  method = String.substring(!method, 0, !methodLen),
-                  path = String.substring(!path, 0, !pathLen),
+                  method = String.substring(loadString method, 0, !methodLen),
+                  path = String.substring(loadString path, 0, !pathLen),
                   minorVersion = !minorVersion,
                   headers = getHeaders (headers, n) (!numHeaders),
                   parsedSize = x
@@ -168,7 +166,7 @@ fun parseResponse (t as (headers, n)) buf =
       val bufLen = String.size(buf)
       val minorVersion = ref 0
       val status = ref 0
-      val msg = ref ""
+      val msg = null ()
       val msgLen = ref 0
       val numHeaders = ref n
   in
@@ -179,7 +177,7 @@ fun parseResponse (t as (headers, n)) buf =
         | x  => SOME{
                    minorVersion = !minorVersion,
                    status = !status,
-                   message = String.substring(!msg, 0, !msgLen),
+                   message = String.substring(loadString msg, 0, !msgLen),
                    headers = getHeaders t (!numHeaders),
                    parsedSize = x
                }

@@ -1,5 +1,7 @@
-val c_dump =
-  _import "c_dump" : 'a array -> ()
+(* val c_dump = *)
+(*   _import "c_dump" : 'a array -> () *)
+
+infixr 0 $
 
 structure Std = struct
   fun id x = x
@@ -9,8 +11,8 @@ structure Std = struct
   fun uncurry f (x, y) = f x y
   fun const x _ = x
 
-  fun dump x =
-    c_dump (Array.array (1, x))
+  (* fun dump x = *)
+  (*   c_dump (Array.array (1, x)) *)
 
   val version = (0,1,0)
   val version_string = "0.1.0"

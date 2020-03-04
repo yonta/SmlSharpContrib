@@ -5,7 +5,7 @@ _require "JsonValue.smi"
 structure JsonEncoder = struct
 
   structure Args = struct
-    type t (= boxed)
+    type t (= {})
     val minify : t
     val lf : t
     val crlf : t
@@ -17,4 +17,3 @@ structure JsonEncoder = struct
 
   val encode : Args.t -> JsonValue.t -> string option
 end
-

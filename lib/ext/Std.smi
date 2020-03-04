@@ -11,7 +11,7 @@ structure Std = struct
   val uncurry : ('a -> 'b -> 'c) -> 'a * 'b -> 'c
   val const : 'a -> 'b -> 'a
 
-  val dump : 'a -> unit
+  (* val dump : 'a -> unit *)
 
   val version : (int * int * int)
   val version_string : string
